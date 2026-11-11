@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Slanje pozivnice</title>
+<style>
+  body{font-family:Georgia,serif;text-align:center;padding:60px 20px;background:#faf6f0;color:#3d3530;font-size:20px}
+  .btn{display:inline-block;margin:24px 0;padding:16px 32px;border-radius:40px;background:#25d366;color:#fff;text-decoration:none;font-family:sans-serif;font-size:20px}
+  .small{color:#8a7d72;font-size:16px}
+</style>
+</head>
+<body>
+<p id="status">Pripremam pozivnicu…</p>
+<a class="btn" id="wa" href="#" style="display:none">Otvori WhatsApp</a>
+<p class="small" id="hint"></p>
+
+<script>
+/* ✏️ Tekst poruke. {ime} i {link} se zamijene automatski. */
+const MESSAGE =
+  "{ime}, s velikim veseljem pozivamo vas na naše vjenčanje 17. srpnja 2027.! 💍\n\n" +
+  "Ovdje je vaša pozivnica, molimo vas da na njoj potvrdite dolazak:\n{link}\n\n" +
+  "Dora i Filip";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxj4W740g1FK5ldJHL-FntJbZElNfJZrfguEqoN9VjufRVO7Mf8RE_dwgxlQ0Wpuqcm/exec";
+
+const p = new URLSearchParams(location.search);
+const id = p.get("id") || "", to = (p.get("to") || "").replace(/\D/g, ""), name = (p.get("n") || "").trim();
+const status = document.getElementById("status"), btn = document.getElementById("wa");
+
+if (!id || !to) {
+  status.textContent = "Nedostaje gost ili broj mobitela.";
+} else {
+  const invite = new URL("./", location.href).href + "?g=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(name);
+  const text = MESSAGE.replace("{ime}", name).replace("{link}", invite);
+  const wa = "https://wa.me/" + to + "?text=" + encodeURIComponent(text);
+  btn.href = wa;
+  status.textContent = "Pozivnica za " + name;
+
+  // Označi u tablici kao „Poslano”, zatim otvori WhatsApp
+  const mark = fetch(SCRIPT_URL + "?send=" + encodeURIComponent(id), { mode: "no-cors" }).catch(() => {});
+  const timeout = new Promise(r => setTimeout(r, 2500));
+  Promise.race([mark, timeout]).then(() => {
+    btn.style.display = "inline-block";
+    document.getElementById("hint").textContent = "U WhatsAppu samo dodirnite „Pošalji”.";
+    location.href = wa;
+  });
+}
+</script>
+</body>
+</html>

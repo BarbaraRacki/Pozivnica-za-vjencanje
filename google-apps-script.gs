@@ -3,15 +3,14 @@
  * Zalijepite ovaj kod u: Google tablica → Proširenja → Apps Script.
  *
  * List „Gosti”: upišete Ime i prezime + Mobitel, a skripta sama doda gumb „Pošalji”.
- * Klik na „Pošalji” označi pozivnicu kao poslanu i otvori WhatsApp s gotovom porukom.
+ * Klik na „Pošalji” otvori posalji.html na stranici pozivnice, koja označi pozivnicu kao
+ * poslanu i otvori WhatsApp s gotovom porukom.
  * Kad gost otvori pozivnicu, upiše se „Otvoreno”; kad potvrdi, upiše se odgovor.
  */
 
 // ✏️ 1) Adresa pozivnice
 const INVITE_URL = 'https://barbararacki.github.io/Pozivnica-za-vjencanje/';
-// ✏️ 2) Nakon prve implementacije ovdje zalijepite URL web-aplikacije (…/exec) i spremite
-const WEB_APP_URL = '';
-// ✏️ 3) Tekst WhatsApp poruke. {ime} i {link} se zamijene automatski.
+// ✏️ 2) Tekst WhatsApp poruke za staru stranicu slanja (sada se koristi tekst iz posalji.html).
 const MESSAGE =
   '{ime}, s velikim veseljem pozivamo vas na naše vjenčanje 17. srpnja 2027.! 💍\n\n' +
   'Ovdje je vaša pozivnica, molimo vas da na njoj potvrdite dolazak:\n{link}\n\n' +
@@ -80,8 +79,11 @@ function prepareRow(sheet, row) {
     sheet.getRange(row, COL.id).setValue(id);
   }
   const cell = sheet.getRange(row, COL.send);
-  if (!WEB_APP_URL) { cell.setValue('⚠ upišite WEB_APP_URL u skriptu'); return; }
-  cell.setFormula('=HYPERLINK("' + WEB_APP_URL + '?send=' + id + '";"📲 Pošalji")');
+  const phone = normalizePhone(sheet.getRange(row, COL.phone).getValue());
+  if (!phone) { cell.setValue('⚠ upišite mobitel'); return; }
+  // Poveznica vodi na posalji.html (na stranici pozivnice), koja označi „Poslano” i otvori WhatsApp.
+  const url = INVITE_URL + 'posalji.html?id=' + id + '&to=' + phone + '&n=' + encodeURIComponent(name);
+  cell.setFormula('=HYPERLINK("' + url + '";"📲 Pošalji")');
 }
 
 /* ---------- Web-aplikacija ---------- */
