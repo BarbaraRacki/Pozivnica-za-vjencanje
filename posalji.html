@@ -19,10 +19,10 @@
 <script>
 /* ✏️ Tekst poruke. {ime} i {link} se zamijene automatski. */
 const MESSAGE =
-  "{ime}, s velikim veseljem pozivamo vas na naše vjenčanje 17. srpnja 2027.! 💍\n\n" +
+  "{ime}, s velikim veseljem pozivamo vas na naše vjenčanje 17. srpnja 2027.!\n\n" +
   "Molimo vas da u pozivnici potvrdite dolazak.\n\n" +
   "Dora i Filip\n\n" +
-  "💌 Otvorite pozivnicu:\n{link}";
+  "{link}";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxj4W740g1FK5ldJHL-FntJbZElNfJZrfguEqoN9VjufRVO7Mf8RE_dwgxlQ0Wpuqcm/exec";
 
 const p = new URLSearchParams(location.search);
@@ -33,7 +33,7 @@ if (!id || !to) {
   status.textContent = "Nedostaje gost ili broj mobitela.";
 } else {
   const invite = new URL("./", location.href).href + "?g=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(name);
-  const text = MESSAGE.replace("{ime}", name).replace("{link}", invite);
+  const text = MESSAGE.replace("{ime}", name).replace("{link}", invite.replace(/^https?:\/\//, ""));
   const wa = "https://wa.me/" + to + "?text=" + encodeURIComponent(text);
   btn.href = wa;
   status.textContent = "Pozivnica za " + name;
