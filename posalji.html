@@ -32,7 +32,7 @@ if (!id || !to) {
   status.textContent = "Nedostaje gost ili broj mobitela.";
 } else {
   const invite = new URL("./", location.href).href + "?g=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(name);
-  const text = MESSAGE.replace("{ime}", name).replace("{link}", invite.replace(/^https?:\/\//, ""));
+  const text = MESSAGE.replace("{ime}", name).replace("{link}", invite);
   const wa = "https://wa.me/" + to + "?text=" + encodeURIComponent(text);
   btn.href = wa;
   status.textContent = "Pozivnica za " + name;
