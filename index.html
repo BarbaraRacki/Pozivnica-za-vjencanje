@@ -266,8 +266,11 @@ const WEDDING = {
       maps: "https://maps.google.com/?q=Zagreb" }
   ],
 
-  // RSVP — potvrde stižu kao poruka na WhatsApp i/ili e-mail
+  // RSVP
   rsvpDeadline: "2027-05-15",
+  // Adresa Google Apps Script web-aplikacije (vidi README). Kad je upisana, potvrde se
+  // spremaju u Google tablicu, a WhatsApp/e-mail gumbi se ne prikazuju.
+  rsvpSheetUrl: "",
   whatsapp: "385917221056",          // broj bez + i razmaka; ostavite "" da sakrijete gumb
   email: "racki.barbara@gmail.com",   // ostavite "" da sakrijete gumb
 
@@ -392,8 +395,18 @@ $("#cal-btn").addEventListener("click", () => {
 
 /* --- RSVP --- */
 const sendRow = $("#send-row");
-if (WEDDING.whatsapp) sendRow.insertAdjacentHTML("beforeend", `<button type="button" class="btn solid" data-via="wa">Pošalji putem WhatsAppa</button>`);
-if (WEDDING.email) sendRow.insertAdjacentHTML("beforeend", `<button type="button" class="btn" data-via="mail">Pošalji e-mailom</button>`);
+if (WEDDING.rsvpSheetUrl) {
+  sendRow.insertAdjacentHTML("beforeend", `<button type="button" class="btn solid" data-via="sheet">Potvrdi</button>`);
+} else {
+  if (WEDDING.whatsapp) sendRow.insertAdjacentHTML("beforeend", `<button type="button" class="btn solid" data-via="wa">Pošalji putem WhatsAppa</button>`);
+  if (WEDDING.email) sendRow.insertAdjacentHTML("beforeend", `<button type="button" class="btn" data-via="mail">Pošalji e-mailom</button>`);
+}
+
+function showThanks(coming){
+  $("#thanks-text").textContent = coming ? "Vaša potvrda je zaprimljena. Veselimo se što ćete biti s nama!" : "Vaš odgovor je zaprimljen. Žao nam je što nećete moći doći, mislit ćemo na vas.";
+  $("#thanks").classList.add("show");
+  if (coming) petals(25);
+}
 
 document.querySelectorAll('input[name="coming"]').forEach(r => r.addEventListener("change", () => {
   $("#if-coming").classList.toggle("hidden", $("#c-no").checked);
@@ -404,6 +417,22 @@ sendRow.addEventListener("click", e => {
   const name = $("#f-name").value.trim();
   if (!name){ $("#f-name").focus(); $("#f-name").style.borderColor = "#c0766a"; return; }
   const coming = $("#c-yes").checked;
+
+  if (btn.dataset.via === "sheet") {
+    const data = {
+      name,
+      coming: coming ? "DA" : "NE",
+      guests: coming ? Number($("#f-guests").value) || 1 : 0,
+      menu: coming ? $("#f-menu").value : "",
+      message: $("#f-msg").value.trim()
+    };
+    btn.disabled = true; btn.textContent = "Šaljem...";
+    fetch(WEDDING.rsvpSheetUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) })
+      .then(() => { sendRow.style.display = "none"; showThanks(coming); })
+      .catch(() => { btn.disabled = false; btn.textContent = "Potvrdi"; alert("Slanje nije uspjelo. Provjerite internetsku vezu i pokušajte ponovno."); });
+    return;
+  }
+
   const lines = [
     `Potvrda dolaska — vjenčanje ${WEDDING.bride} & ${WEDDING.groom}`,
     ``,
@@ -417,9 +446,7 @@ sendRow.addEventListener("click", e => {
     ? `https://wa.me/${WEDDING.whatsapp}?text=${encodeURIComponent(text)}`
     : `mailto:${WEDDING.email}?subject=${encodeURIComponent("Potvrda dolaska — " + name)}&body=${encodeURIComponent(text)}`;
   window.open(url, "_blank");
-  $("#thanks-text").textContent = coming ? "Veselimo se što ćete biti s nama!" : "Žao nam je što nećete moći doći, mislit ćemo na vas.";
-  $("#thanks").classList.add("show");
-  if (coming) petals(25);
+  showThanks(coming);
 });
 
 /* --- glazba (neobavezno) --- */
