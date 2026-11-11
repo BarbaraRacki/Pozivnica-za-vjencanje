@@ -26,6 +26,7 @@
   .env-back{position:absolute;inset:0;background:#e4d3bd;border-radius:6px;box-shadow:0 20px 40px rgba(90,60,30,.18)}
   .env-letter{position:absolute;left:6%;right:6%;top:8%;bottom:8%;background:var(--paper);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform 1s .5s cubic-bezier(.4,0,.2,1);z-index:2}
   .env-letter .script{font-size:clamp(28px,8vw,40px);color:var(--gold)}
+  #env-name{font-size:clamp(22px,6.5vw,32px);text-align:center;padding:0 10px;line-height:1.15}
   .env-letter > *{opacity:0;transition:opacity .6s 1s}
   .envelope.open .env-letter > *{opacity:1}
   .env-front{position:absolute;inset:0;z-index:3;border-radius:6px;overflow:hidden;pointer-events:none}
@@ -62,6 +63,8 @@
   .scroll-cue{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);color:var(--gold);font-size:26px;animation:bob 2s infinite}
   @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
 
+  .guest-greet{font-family:'Great Vibes',cursive;font-size:clamp(34px,9vw,48px);color:var(--gold);margin-bottom:6px}
+  .guest-greet:empty{display:none}
   .intro-text{font-size:21px;font-style:italic;max-width:520px;margin:0 auto}
 
   /* odbrojavanje */
@@ -135,7 +138,7 @@
 <div id="envelope-screen" role="button" tabindex="0" aria-label="Otvori pozivnicu">
   <div class="envelope" id="envelope">
     <div class="env-back"></div>
-    <div class="env-letter"><span class="eyebrow">Pozivnica</span><span class="script" data-fill="initials"></span></div>
+    <div class="env-letter"><span class="eyebrow" id="env-for">Pozivnica</span><span class="script" id="env-name" data-fill="initials"></span></div>
     <div class="env-front"></div>
     <div class="env-flap"><svg viewBox="0 0 100 62" preserveAspectRatio="none"><polygon points="0,0 100,0 50,62" fill="#dcc7ab"/></svg></div>
     <div class="seal" data-fill="sealInitials"></div>
@@ -145,6 +148,7 @@
 
 <!-- ===================== NASLOVNA ===================== -->
 <section id="hero">
+  <p class="guest-greet reveal" id="guest-greet"></p>
   <p class="eyebrow reveal">Sa zadovoljstvom vas pozivamo na naše vjenčanje</p>
   <h1 class="names reveal"><span data-fill="bride"></span><span class="amp">&amp;</span><span data-fill="groom"></span></h1>
   <p class="date reveal" data-fill="dateText"></p>
@@ -305,6 +309,20 @@ const fills = {
 document.querySelectorAll("[data-fill]").forEach(el => el.textContent = fills[el.dataset.fill] || "");
 document.title = `${WEDDING.bride} & ${WEDDING.groom} — Pozivnica`;
 
+/* --- personalizirana pozivnica (?g=ID&n=Ime) --- */
+const params = new URLSearchParams(location.search);
+const GUEST = { id: (params.get("g") || "").slice(0, 40), name: (params.get("n") || "").slice(0, 120).trim() };
+if (GUEST.name) {
+  $("#guest-greet").textContent = GUEST.name;
+  $("#env-for").textContent = "Pozivnica za";
+  $("#env-name").textContent = GUEST.name;
+  $("#f-name").value = GUEST.name;
+  document.title = `Pozivnica za ${GUEST.name}`;
+}
+if (GUEST.id && WEDDING.rsvpSheetUrl) {
+  fetch(`${WEDDING.rsvpSheetUrl}?open=${encodeURIComponent(GUEST.id)}`, { mode: "no-cors" }).catch(() => {});
+}
+
 $("#timeline").innerHTML = WEDDING.program.map(p => `
   <div class="tl-item reveal">
     <div class="tl-dot">${p.icon}</div>
@@ -420,6 +438,7 @@ sendRow.addEventListener("click", e => {
 
   if (btn.dataset.via === "sheet") {
     const data = {
+      id: GUEST.id,
       name,
       coming: coming ? "DA" : "NE",
       guests: coming ? Number($("#f-guests").value) || 1 : 0,
